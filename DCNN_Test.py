@@ -3,6 +3,32 @@
 
 # Description: Testing for DCNN
 
+# Notes
+# original: Better in all categories with k = 1 (but worse than normal CNN) -> shows model not utilizing dendrites
+# All params are pretty variable
+
+# DCNN2
+#Loaded weights from dendritic2_R8_S128_k16_f16_mnist.pth
+# Trainable parameters: 43218
+# Test loss: 0.0317
+# Test accuracy: 0.9894
+# Inference time on full test set: 1.102 s
+# Average time per image: 0.110 ms
+
+# DCNN1 (5 epochs, k = 4, r = 8, out = 1):
+# Trainable parameters: 20068
+# Test loss: 0.0364
+# Test accuracy: 0.9875
+# Inference time on full test set: 0.844 s
+# Average time per image: 0.084 ms # highly variable
+
+# Simple CNN (5 epochs):
+# Trainable parameters: 206922
+# Test loss: 0.0329
+# Test accuracy: 0.9903
+# Inference time on full test set: 0.851 s
+# Average time per image: 0.085 ms # highly variable
+
 # Imports
 import time
 import torch
@@ -14,6 +40,9 @@ from torchvision import datasets, transforms
 
 # 1) Import model
 from DCNN import SimpleCNN  # and later DendriticCNN if you want
+from DCNN import DendriticCNN1
+from DCNN import DendriticCNN2
+
 
 #2) Device setup
 if torch.backends.mps.is_available():
@@ -85,33 +114,54 @@ def evaluate(model, dataloader, device):
 
 
 #5) Main block
-def main(
-    model_name="simple",
-    weights_path="simplecnn_mnist.pth"
-):
-    # a) Build model
+def build_model(model_name, k, r, out_channels, device, n_somata, dend_per_soma, fan_in):
     if model_name == "simple":
-        model = SimpleCNN().to(device)
+        return SimpleCNN().to(device)
+    elif model_name == "dendritic1":
+        # IMPORTANT: pass the SAME hyperparams used at training time
+        return DendriticCNN1(k=k, r=r, out_channels=out_channels).to(device)
+    elif model_name == "dendritic2":
+        # IMPORTANT: pass the SAME hyperparams used at training time
+        return DendriticCNN2(r=r, n_somata=n_somata, dend_per_soma=dend_per_soma, fan_in=fan_in).to(device)
     else:
         raise ValueError(f"Unknown model_name: {model_name}")
 
+def main(
+    model_name = "dendritic2",
+    weights_path = "dendritic2_R8_S128_k16_f16_mnist.pth",
+    k = 8,               # must match checkpoint
+    r = 8,               # must match checkpoint
+    out_channels=2,    # must match checkpoint 
+    n_somata=128, 
+    dend_per_soma=16, 
+    fan_in=16
+):
+    # a) Build model with matching hparams
+    model = build_model(model_name, k, r, out_channels, device, n_somata, dend_per_soma, fan_in)
+
     # b) Load weights
     state_dict = torch.load(weights_path, map_location=device)
-    model.load_state_dict(state_dict)
+
+    # Strict=True is ideal when hparams match; set False only if you expect differences.
+    missing, unexpected = model.load_state_dict(state_dict, strict=False)
+    if missing or unexpected:
+        print("Warning: non-strict load")
+        if missing:   print("  missing keys:", missing)
+        if unexpected:print("  unexpected keys:", unexpected)
+
     print(f"Loaded weights from {weights_path}")
 
     # c) Params
     n_params = count_trainable_params(model)
     print(f"Trainable parameters: {n_params}")
 
-    # d) Evaluate (loss, acc, wall-clock)
+    # d) Evaluate
     test_loss, test_acc, elapsed, time_per_sample = evaluate(model, test_loader, device)
-
     print(f"Test loss: {test_loss:.4f}")
     print(f"Test accuracy: {test_acc:.4f}")
     print(f"Inference time on full test set: {elapsed:.3f} s")
     print(f"Average time per image: {time_per_sample*1000:.3f} ms")
 
-
 if __name__ == "__main__":
     main()
+
