@@ -7,7 +7,7 @@
 
 # Notes
 # Add k hyperparameter
-
+# Dendrites only seeing a subset isnt making sense
 
 # Imports
 import random
@@ -545,10 +545,8 @@ def train_one_epoch(model, dataloader, optimizer, criterion, device):
    return avg_loss, avg_acc
 
 
-
-
 # 4) Main execution block - save and export model
-def main(model_name="dendritic2", epochs=5, lr=1e-3, batch_size=64, k=16, r=8, out_channels=2, n_somata=128, dend_per_soma=16, fan_in=16):
+def main(model_name="dendritic2", epochs=5, lr=1e-3, batch_size=64, k=4, r=4, out_channels=2, n_somata=64, dend_per_soma=8, fan_in=72):
    """
    Main execution block to train and save a given model.
 

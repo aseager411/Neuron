@@ -7,13 +7,27 @@
 # original: Better in all categories with k = 1 (but worse than normal CNN) -> shows model not utilizing dendrites
 # All params are pretty variable
 
-# DCNN2
-#Loaded weights from dendritic2_R8_S128_k16_f16_mnist.pth
+# Simple CNN:
+# Trainable parameters: 206922
+# Test loss: 0.0329
+# Test accuracy: 0.9903
+# Inference time on full test set: 0.851 s
+# Average time per image: 0.085 ms # highly variable
+
+# DCNN:
+# Loaded weights from dendritic2_R8_S128_k16_f16_mnist.pth
 # Trainable parameters: 43218
 # Test loss: 0.0317
 # Test accuracy: 0.9894
 # Inference time on full test set: 1.102 s
 # Average time per image: 0.110 ms
+
+# Loaded weights from dendritic2_R8_S64_k8_f72_mnist.pth
+# Trainable parameters: 43602
+# Test loss: 0.0333
+# Test accuracy: 0.9886
+# Inference time on full test set: 1.109 s
+# Average time per image: 0.111 ms
 
 # DCNN1 (5 epochs, k = 4, r = 8, out = 1):
 # Trainable parameters: 20068
@@ -21,13 +35,6 @@
 # Test accuracy: 0.9875
 # Inference time on full test set: 0.844 s
 # Average time per image: 0.084 ms # highly variable
-
-# Simple CNN (5 epochs):
-# Trainable parameters: 206922
-# Test loss: 0.0329
-# Test accuracy: 0.9903
-# Inference time on full test set: 0.851 s
-# Average time per image: 0.085 ms # highly variable
 
 # Imports
 import time
@@ -128,13 +135,13 @@ def build_model(model_name, k, r, out_channels, device, n_somata, dend_per_soma,
 
 def main(
     model_name = "dendritic2",
-    weights_path = "dendritic2_R8_S128_k16_f16_mnist.pth",
+    weights_path = "dendritic2_R8_S64_k8_f72_mnist.pth",
     k = 8,               # must match checkpoint
     r = 8,               # must match checkpoint
     out_channels=2,    # must match checkpoint 
-    n_somata=128, 
-    dend_per_soma=16, 
-    fan_in=16
+    n_somata=64, 
+    dend_per_soma=8, 
+    fan_in=72
 ):
     # a) Build model with matching hparams
     model = build_model(model_name, k, r, out_channels, device, n_somata, dend_per_soma, fan_in)
